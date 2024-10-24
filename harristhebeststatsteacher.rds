@@ -1,0 +1,57 @@
+library(tidyverse)
+library(caret)
+library(randomForest)
+library(gbm)
+library(xgboost)
+library(Metrics)
+
+#This is my moms PC but can be like adjusted based on the directly lol
+data <- read.csv("C:\\Users\\neeli\\Downloads\\wtk_site_metadata (1).csv")
+
+if (is.null(data)) {
+  stop("Dataset not loaded correctly, check file path.")
+}
+
+head(data)
+summary(data)
+str(data)
+
+if ("capacity_factor" %in% colnames(data)) {
+  summary(data$capacity_factor)
+} else {
+  stop("capacity_factor column is missing in the dataset.")
+}
+
+data <- data %>%
+  mutate(latitude_wind = latitude * wind_speed,
+         longitude_wind = longitude * wind_speed)
+
+data_clean <- data %>%
+  drop_na(longitude, latitude, fraction_of_usable_area, capacity, wind_speed, capacity_factor)
+
+if (!"wind_speed" %in% colnames(data_clean)) {
+  stop("wind_speed column is missing.")
+}
+if (!"capacity_factor" %in% colnames(data_clean)) {
+  stop("capacity_factor column is missing.")
+}
+
+ggplot(data_clean, aes(x = wind_speed)) +
+  geom_histogram(binwidth = 0.5, fill = "blue", color = "white") +
+  labs(title = "Wind Speed Distribution", x = "Wind Speed", y = "Count")
+
+ggplot(data_clean, aes(y = capacity_factor)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Boxplot of Capacity Factor", y = "Capacity Factor")
+
+data_clean <- data_clean %>%
+  mutate(wind_speed_group = cut(wind_speed, breaks = 3))
+
+ggplot(data_clean, aes(x = wind_speed_group, y = capacity_factor)) +
+  geom_boxplot(fill = "orange") +
+  labs(title = "Capacity Factor by Wind Speed Group", x = "Wind Speed Group", y = "Capacity Factor")
+
+avg_capacity_original <- mean(data_clean$capacity_factor)
+avg_capacity_modified <- mean(data_clean$latitude_wind)
+avg_capacity_original
+avg_capacity_modified
